@@ -1,0 +1,17 @@
+=== TEST A09 EVIDENCE: RBAC & REVOCATION VERIFICATION ===
+Timestamp: 2026-11-17T18:27:31.265Z
+
+[Actor 1: u-owner-guid (Owner)] Status: 200 (111.79ms)
+Outcome: done
+
+[Actor 2: u-viewer-guid (Viewer)] Status: 403 (5.8ms)
+Response: {"detail": "Forbidden: Insufficient privileges"}
+
+[Actor 3: u-revoked-guid (Revoked Credentials)] Status: 403 (6.37ms)
+Response: {"detail": "Forbidden: Unauthorised or permission revoked"}
+
+VERIFICATION:
+- Authorized Owner Accepted (HTTP 200): True
+- Viewer Denied (HTTP 403): True
+- Revoked User Denied Explicitly (HTTP 403): True
+- Result: PASS

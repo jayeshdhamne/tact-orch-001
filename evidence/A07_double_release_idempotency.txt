@@ -1,0 +1,26 @@
+=== TEST A07 EVIDENCE: DOUBLE RELEASE IDEMPOTENCY ===
+Timestamp: 2026-11-17T18:27:30.780Z
+
+[Step 1] Set conv-customer-a-enquiry to GATED mode.
+
+[Step 2] Action dispatched. Status: 200, State: held, Action ID: 8e418649-092f-4343-9329-f225345d594e
+
+[Step 3 - First Release] Status: 200 (278.49ms)
+Response: {
+  "action_id": "8e418649-092f-4343-9329-f225345d594e",
+  "state": "done",
+  "outcome": {
+    "status": "success",
+    "engine": "n8n"
+  }
+}
+
+[Step 4 - Duplicate Release Call on SAME action] Status: 400 (8.97ms)
+Response: {
+  "detail": "Action is not held (current state: done)"
+}
+
+VERIFICATION:
+- First Release Executed to State 'done': True
+- Duplicate Release Rejected with HTTP 400: True
+- Result: PASS

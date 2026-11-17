@@ -1,0 +1,19 @@
+=== TEST A08 EVIDENCE: CONCURRENT RACE CONDITION ===
+Timestamp: 2026-11-17T18:27:31.112Z
+
+[Thread 1: POST /dispatch]
+- Request Sent:   2026-11-17T18:27:31.126Z
+- Response Recv:  2026-11-17T18:27:31.243Z (116.6ms)
+- Outcome State:  done
+- Full Body:      {"action_id": "2f99bf06-321e-4d61-89cb-c1474e298777", "state": "done", "outcome": {"status": "success", "engine": "n8n"}}
+
+[Thread 2: POST /conversations/conv-customer-a-enquiry/mode -> gated]
+- Request Sent:   2026-11-17T18:27:31.127Z
+- Response Recv:  2026-11-17T18:27:31.252Z (125.54ms)
+- Full Body:      {"conversation_id": "conv-customer-a-enquiry", "mode": "gated", "in_flight_accounted": 0, "confirmed_at": "2026-11-17T18:27:31.244028+00:00"}
+
+VERIFICATION:
+- Atomic Outcome Resolved without Crash or 500: True
+- Dispatched State Atomically Locked: done
+- In-Flight Handled Cleanly: True
+- Result: PASS

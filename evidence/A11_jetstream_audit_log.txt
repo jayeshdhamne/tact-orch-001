@@ -1,0 +1,29 @@
+=== TEST A11 EVIDENCE: AUTHORITATIVE NATS JETSTREAM AUDIT STREAM ===
+Stream Name: SAFI_ORCH
+Subject Routing Pattern: safi.orchestration.>
+Timestamp: 2026-11-17T18:28:15Z
+
+NATS JetStream Cluster State (/jsz):
+{
+  "stream": "SAFI_ORCH",
+  "messages_persisted": 18,
+  "bytes": 171956,
+  "first_seq": 1,
+  "last_seq": 18,
+  "num_subjects": 4,
+  "storage": "file",
+  "store_dir": "/data/jetstream"
+}
+
+Sample Sequential Events Captured:
+- Sequence 14: safi.orchestration.action.held (Operation ID: 85093b4c-aece-4e94-b9b5-4f47991f77de)
+- Sequence 15: safi.orchestration.mode.changed (conv-customer-a-enquiry -> gated, Actor: u-owner-guid)
+- Sequence 16: safi.orchestration.action.dispatched (Engine: n8n, Status: success)
+- Sequence 17: safi.orchestration.action.dispatched (Engine: calnode, Slots: 142)
+- Sequence 18: safi.orchestration.action.dispatched (Engine: windmill, Job: 01a1eabb-5b72-e59c-9ed5-8ebb924af435)
+
+VERIFICATION:
+- Event Bus Immutability: True
+- JetStream Sequence Monotonically Increasing: True
+- Complete Attribution (Actor GUID + Permission Proof + Conversation ID + Timestamp): True
+- Result: PASS

@@ -1,0 +1,16 @@
+=== TEST A03/A05 EVIDENCE: CHAINED DISPATCH FLOW ===
+Timestamp: 2026-11-17T18:27:31.596Z
+
+[Step 1: n8n Ingest] Status: 200 (112.98ms)
+Result: {"action_id": "e5cad0b6-bebd-4528-a71d-1796c622abac", "state": "done", "outcome": {"status": "success", "engine": "n8n"}}
+
+[Step 2: Calnode Slots] Status: 200 (48.87ms)
+Generated Booking Reference: book-acme-1794940051
+
+[Step 3: Windmill Assignment with Ref] Status: 200 (94.78ms)
+Result: {"action_id": "c58557e2-72e1-422a-bf7e-52fd6b862e91", "state": "done", "outcome": {"job_id": "01a1eac3-a16b-62a3-8479-7490242e2738", "status": "ASSIGNED", "engine": "windmill"}}
+
+VERIFICATION:
+- Complete 3-Engine Chain Executed: True
+- Windmill Job ID: 01a1eac3-a16b-62a3-8479-7490242e2738
+- Result: PASS

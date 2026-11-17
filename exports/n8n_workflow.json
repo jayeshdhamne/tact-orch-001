@@ -1,0 +1,63 @@
+[
+  {
+    "updatedAt": "2026-11-17T08:58:36.850Z",
+    "createdAt": "2026-11-17T08:06:43.383Z",
+    "id": "P01KKas5USc1MF4M",
+    "name": "SafiChat Lead Ingestion & Follow-Up",
+    "description": "TACT-ORCH-001 Marketing Follow-Up Webhook",
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "safi-gate",
+          "authentication": "headerAuth",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.2,
+        "position": [0, 0],
+        "id": "d243f1ac-7a06-4a20-bf85-ebd625bdb2bd",
+        "name": "Webhook",
+        "webhookId": "c5310752-94a5-4365-b64c-19c134f846b9",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "89OzIBYEauFJmdfo",
+            "name": "Header Auth account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "{\"status\": \"success\", \"engine\": \"n8n\"}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [224, 0],
+        "id": "da257e75-b3d3-4936-a789-c015f558769f",
+        "name": "Respond to Webhook"
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate"
+    }
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "event_type": {
+    "slug": "intro-call",
+    "title": "Introductory Meeting",
+    "description": "30-minute introductory meeting with solution engineers",
+    "length_minutes": 30,
+    "scheduling_type": "round_robin",
+    "host": {
+      "id": "be905f5f-461b-48f3-a2bc-3001cdb6b39c",
+      "name": "Jayesh Dhamne",
+      "timezone": "Asia/Kolkata"
+    },
+    "availability": {
+      "days": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+      "start_time": "09:00",
+      "end_time": "17:00"
+    },
+    "smtp_integration": {
+      "host": "mailpit",
+      "port": 1025,
+      "sink_only": true
+    }
+  }
+}

@@ -1,0 +1,12 @@
+=== TEST A06 EVIDENCE: PER-CONVERSATION ISOLATION ===
+Timestamp: 2026-11-17T18:27:31.390Z
+Modes Configured: conv-customer-a-enquiry = GATED, conv-customer-b-pricing = UNGATED
+
+[Dispatch Room A (Gated)] Status: 200, State: held
+
+[Dispatch Room B (Ungated)] Status: 200, State: done
+
+VERIFICATION:
+- Room A Dispatches are Held: True
+- Room B Dispatches Proceed Automatically: True
+- Result: PASS

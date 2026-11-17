@@ -1,0 +1,33 @@
+=== TEST A10 EVIDENCE: CRASH RECOVERY (STACK RESTART WHILE ACTION HELD) ===
+Timestamp: 2026-11-17T18:25:01.942Z
+
+[Step 1] Set conv-customer-a-enquiry to GATED mode.
+
+[Step 2] Action dispatched in Gated mode.
+  Action ID: 66b57cb1-1513-4ae6-96eb-a4d232af619d
+  State: held
+  Idempotency Key: key-a10-crash-1794939901
+
+[Step 3] Executing 'docker compose restart gate' to simulate hard crash/restart...
+  Container restarted in 2.39s. Docker output: 
+  Gate adapter back online and responding healthy.
+
+[Step 4] Query Held Queue after restart:
+  Action 66b57cb1-1513-4ae6-96eb-a4d232af619d found intact in queue: True
+  Total held items: 3
+
+[Step 5] Re-dispatched identical payload after crash:
+  Status: 200 (20.38ms)
+  Returned Action ID: 66b57cb1-1513-4ae6-96eb-a4d232af619d
+  Returned Status: cached
+  Returned State: held
+
+[Step 6] Release held action after crash recovery:
+  Release Status: 200 (309.7ms)
+  State: done
+
+VERIFICATION:
+- Action Persisted Across Crash: True
+- Retry After Crash Yielded Cached Result (No Duplicate): True
+- Recovered Action Successfully Dispatched: True
+- Result: PASS

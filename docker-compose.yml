@@ -1,0 +1,172 @@
+# ==============================================================================
+# TACT-ORCH-001 — Unified Local Orchestration Stack
+# Single Compose Manifest for all 7 Services (Zero Separate Docker Commands)
+# All images pinned to exact SHA digests (SOW §4 & Test A01 compliance)
+# All external port bindings strictly isolated to 127.0.0.1
+# ==============================================================================
+
+services:
+
+  # ─── 1. NATS + JetStream (Authoritative Event Bus) ─────────────────────────
+  nats:
+    image: nats:2.15.3-alpine@sha256:558394a23dd3c36f2d3a64b51865fd09908010e80a542cea5e75c2af543ed62a
+    container_name: safi-nats
+    command: "-js -sd /data -m 8222"
+    ports:
+      - "127.0.0.1:4222:4222"   # client connections (Gate uses this)
+      - "127.0.0.1:8222:8222"   # HTTP monitoring (health check)
+    volumes:
+      - nats-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8222/varz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─── 2. PostgreSQL (Windmill Operational Backend) ─────────────────────────
+  postgres:
+    image: postgres:16-alpine@sha256:81e77a4833487b8132fe4b00bedd39dc3f74b8641e387f19312a48f7de218c2e
+    container_name: safi-postgres
+    environment:
+      POSTGRES_DB:       windmill
+      POSTGRES_USER:     windmill
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}   # set in .env — never default
+    ports:
+      - "127.0.0.1:5432:5432"   # localhost only
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U windmill"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── 3. Windmill Server (Operations Task Engine) ──────────────────────────
+  windmill-server:
+    image: ghcr.io/windmill-labs/windmill:1.875.0@sha256:39d81c287947d4b787574df071a5723f8b3a809422bf2c24e900635cc35a63ad
+    container_name: safi-windmill-server
+    environment:
+      DATABASE_URL:  postgresql://windmill:${POSTGRES_PASSWORD}@postgres:5432/windmill?sslmode=disable
+      MODE:          server
+      BASE_URL:      http://localhost:8000
+      DISABLE_EMAIL: "true"    # no outbound emails — SOW requires this
+    ports:
+      - "127.0.0.1:8000:8000"   # localhost only — no public exposure
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - windmill-data:/tmp/windmill
+    restart: unless-stopped
+
+  # ─── 4. Windmill Worker (Task Execution Worker) ───────────────────────────
+  windmill-worker:
+    image: ghcr.io/windmill-labs/windmill:1.875.0@sha256:39d81c287947d4b787574df071a5723f8b3a809422bf2c24e900635cc35a63ad
+    container_name: safi-windmill-worker
+    environment:
+      DATABASE_URL: postgresql://windmill:${POSTGRES_PASSWORD}@postgres:5432/windmill?sslmode=disable
+      MODE:         worker
+      WORKER_GROUP: default
+    depends_on:
+      - windmill-server
+    volumes:
+      - windmill-data:/tmp/windmill
+      - /var/run/docker.sock:/var/run/docker.sock  # needed to run script jobs
+    restart: unless-stopped
+
+  # ─── 5. Calnode (Go + SQLite Micro-Scheduler) ─────────────────────────────
+  calnode:
+    image: ghcr.io/calnode/calnode:0.14.0@sha256:120f1434d02c409b25f981a163cd4408db3e3f3ea571abc4c1e3e922f292af80
+    container_name: safi-calnode
+    environment:
+      PORT:                   "3000"
+      BASE_URL:               "http://localhost:3000"
+      CALNODE_ENCRYPTION_KEY: "safi_secret_encryption_key_32bytes!"
+      API_KEY:                ${CALNODE_API_KEY}
+    ports:
+      - "127.0.0.1:3000:3000"   # localhost only
+    volumes:
+      - calnode-data:/data
+    restart: unless-stopped
+
+  # ─── 6. Mailpit (Outbound Test Email Sink — Nothing Escapes) ──────────────
+  mailpit:
+    image: axllent/mailpit:v1.33.1@sha256:aef2aacc11f075ec0fb6874275ee4a421e688e11a96ebb296134d1735c7761ce
+    container_name: safi-mailpit
+    ports:
+      - "127.0.0.1:1025:1025"   # SMTP sink port
+      - "127.0.0.1:8025:8025"   # Webmail inspect UI
+    restart: unless-stopped
+
+  # ─── 7. n8n (Marketing Workflow Engine) ───────────────────────────────────
+  n8n:
+    image: n8nio/n8n:nightly-2ca4d34-debian@sha256:8c22a5a0d881ea249c94c53d71312c37d660c87a31939a960e3b56a1d857cd69
+    container_name: safi-n8n
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=Asia/Kolkata
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+    ports:
+      - "127.0.0.1:5678:5678"   # localhost only
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+
+  # ─── 8. Gate Adapter (Our Python Orchestrator & SafiChat Console) ──────────
+  gate:
+    build:
+      context: ./gate
+      dockerfile: Dockerfile
+    container_name: safi-gate
+    environment:
+      # LiveKit
+      LIVEKIT_URL:        ${LIVEKIT_URL}
+      LIVEKIT_API_KEY:    ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+      # n8n Local Service (Reachable via Compose network as 'n8n')
+      N8N_WEBHOOK_URL:    ${N8N_WEBHOOK_URL}
+      N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET}
+      # Calnode
+      CALNODE_URL:        http://calnode:3000
+      CALNODE_API_KEY:    ${CALNODE_API_KEY}
+      # Windmill
+      WINDMILL_URL:       http://windmill-server:8000
+      WINDMILL_TOKEN:     ${WINDMILL_TOKEN}
+      WINDMILL_WORKSPACE: ${WINDMILL_WORKSPACE}
+      # NATS
+      NATS_URL:           nats://nats:4222
+      # Gate DB
+      GATE_DB_PATH:       /data/gate.db
+    ports:
+      - "127.0.0.1:8080:8080"   # localhost only
+    volumes:
+      - gate-data:/data
+      - ./gate:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      n8n:
+        condition: service_started
+      calnode:
+        condition: service_started
+      windmill-server:
+        condition: service_started
+    restart: unless-stopped
+
+# ─── Named Volumes (Data persists across restarts) ───────────────────────────
+volumes:
+  nats-data:
+  pg-data:
+  windmill-data:
+  calnode-data:
+  gate-data:
+  n8n_data:
+    name: n8n_data
+    external: true

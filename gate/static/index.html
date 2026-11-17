@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafiChat — Multi-Engine Orchestration Console</title>
+    <!-- Google Sans / Plus Jakarta Sans & JetBrains Mono Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/livekit-client/dist/livekit-client.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --bg-surface: #101726;
+            --bg-card: #172236;
+            --bg-card-hover: #1e2c45;
+            --border-subtle: #24344d;
+            --border-focus: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #cbd5e1;
+            --primary-accent: #6366f1;
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --n8n-color: #ff6d5a;
+            --calnode-color: #10b981;
+            --windmill-color: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Google Sans', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Override Bootstrap dark mode text-muted for crisp readability */
+        .text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(16, 23, 38, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2b3d5b;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475d84;
+        }
+
+        /* Top Navigation Bar */
+        .top-navbar {
+            background: rgba(16, 23, 38, 0.9);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            color: #ffffff;
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+        }
+
+        .brand-title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: -0.02em;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-badge {
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            letter-spacing: 0.05em;
+        }
+
+        /* App Layout Container */
+        .app-layout {
+            display: flex;
+            height: calc(100vh - 66px);
+            overflow: hidden;
+        }
+
+        /* Sidebar Panels */
+        .sidebar-left {
+            width: 320px;
+            min-width: 290px;
+            background-color: var(--bg-surface);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .workspace-center {
+            flex-grow: 1;
+            min-width: 440px;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-base);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .sidebar-right {
+            width: 380px;
+            min-width: 320px;
+            background-color: var(--bg-surface);
+            border-left: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 1100px) {
+            .app-layout {
+                overflow-x: auto;
+            }
+            .sidebar-left {
+                width: 280px;
+            }
+            .sidebar-right {
+                width: 320px;
+            }
+        }
+
+        /* Card Boxes */
+        .section-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 14px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .section-box:hover {
+            border-color: #3b5074;
+        }
+
+        .section-header {
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #a0aec0;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Conversation Cards */
+        .conv-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 13px 14px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.22s ease-in-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .conv-card:hover {
+            background-color: var(--bg-card-hover);
+            border-color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .conv-card.active {
+            background: linear-gradient(135deg, rgba(30, 48, 77, 0.95) 0%, rgba(18, 29, 48, 0.98) 100%);
+            border: 1.5px solid #3b82f6;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
+        }
+
+        .conv-card.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #3b82f6;
+            border-radius: 4px 0 0 4px;
+        }
+
+        .conv-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #233550;
+            color: #93c5fd;
+            font-weight: 700;
+            font-size: 0.88rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* Badges */
+        .mode-badge-pill {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.04em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-ungated {
+            background: rgba(16, 185, 129, 0.18);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+
+        .badge-gated {
+            background: rgba(239, 68, 68, 0.18);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* Workspace Header */
+        .workspace-header {
+            padding: 16px 24px;
+            background: rgba(16, 23, 38, 0.85);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Chat / Activity Stream */
+        .activity-stream {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .message-bubble {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+            transition: all 0.2s ease;
+        }
+
+        .message-bubble:hover {
+            border-color: #3b5074;
+        }
+
+        /* Dispatch Hub Action Cards */
+        .command-hub {
+            background: rgba(16, 23, 38, 0.95);
+            backdrop-filter: blur(14px);
+            border-top: 1px solid var(--border-subtle);
+            padding: 16px 24px;
+        }
+
+        .engine-card-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 12px 14px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .engine-card-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+        }
+
+        .engine-card-btn.n8n-btn:hover {
+            border-color: var(--n8n-color);
+            background: rgba(255, 109, 90, 0.1);
+        }
+        .engine-card-btn.calnode-btn:hover {
+            border-color: var(--calnode-color);
+            background: rgba(16, 185, 129, 0.1);
+        }
+        .engine-card-btn.windmill-btn:hover {
+            border-color: var(--windmill-color);
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        .flow-btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+            border: none;
+            color: #ffffff;
+            font-weight: 700;
+            padding: 12px 20px;
+            border-radius: 10px;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .flow-btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 22px rgba(99, 102, 241, 0.45);
+            filter: brightness(1.08);
+        }
+
+        /* Held Actions Queue */
+        .held-container-scroll {
+            max-height: 44vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .held-card {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        pre {
+            background-color: #0b0f19;
+            color: #38bdf8;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            margin: 0;
+            border: 1px solid #1e293b;
+        }
+
+        /* Toast Container - Repositioned to Top-Right to prevent button occlusion */
+        #toastContainer {
+            position: fixed;
+            top: 76px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 360px;
+        }
+
+        .safi-toast {
+            background: #172236;
+            color: #f8fafc;
+            border: 1px solid #334767;
+            border-radius: 10px;
+            padding: 12px 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.25s ease forwards;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Top Navigation Bar -->
+<header class="top-navbar">
+    <div class="brand-box">
+        <div class="brand-icon">
+            <i class="bi bi-diagram-3-fill"></i>
+        </div>
+        <div>
+            <div class="brand-title">
+                SafiChat <span style="font-weight: 300; opacity: 0.85;">Orchestration OS</span>
+                <span class="brand-badge">TACT-ORCH-001</span>
+            </div>
+            <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 1px;">
+                Single Dispatcher Gateway • Zero-Leak Sandbox • UNIX Core
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status & Indicators -->
+    <div class="d-flex align-items-center gap-3">
+        <!-- LiveKit Cloud Badge -->
+        <div id="lkStatusBadge" class="mode-badge-pill" style="background: rgba(30, 41, 59, 0.7); border: 1px solid var(--border-subtle); color: #cbd5e1;">
+            <i class="bi bi-circle-fill text-secondary" style="font-size: 0.45rem;"></i>
+            <span>LiveKit: Initializing...</span>
+        </div>
+
+        <!-- Engines Live Indicator -->
+        <div class="mode-badge-pill" style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399;">
+            <i class="bi bi-check-circle-fill text-success" style="font-size: 0.75rem;"></i>
+            <span>3 Engines Active</span>
+        </div>
+
+        <!-- Zero-Leak SMTP Pill -->
+        <a href="http://localhost:8025" target="_blank" class="mode-badge-pill text-decoration-none" style="background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); color: #a5b4fc;">
+            <i class="bi bi-shield-check text-primary" style="font-size: 0.75rem;"></i>
+            <span>Mailpit Sink (Zero Leak)</span>
+        </a>
+    </div>
+</header>
+
+<!-- Main App Layout -->
+<div class="app-layout">
+    
+    <!-- Left Sidebar: Conversations & User Identity -->
+    <aside class="sidebar-left p-3 overflow-y-auto">
+        
+        <!-- Active User Identity Box -->
+        <div class="section-box">
+            <div class="section-header">
+                <i class="bi bi-person-badge-fill text-primary"></i> Actor Identity & RBAC
+            </div>
+            <select id="userSelector" class="form-select form-select-sm bg-dark text-white border-secondary mb-2" onchange="onUserChanged()">
+                <option value="u-owner-guid">u-owner-guid (Owner — Full Access)</option>
+                <option value="u-viewer-guid">u-viewer-guid (Viewer — Read Only / Test A09)</option>
+                <option value="u-revoked-guid">u-revoked-guid (Revoked — Test A09)</option>
+            </select>
+            <div style="font-size: 0.76rem; color: #94a3b8; line-height: 1.35;">
+                <i class="bi bi-shield-lock-fill text-warning me-1"></i> Mode switches and decisions require valid authorization proof.
+            </div>
+        </div>
+
+        <!-- Customer Conversations List -->
+        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+            <span class="section-header mb-0">
+                <i class="bi bi-chat-dots-fill text-info"></i> Customer Rooms (3)
+            </span>
+            <span class="badge bg-secondary" style="font-size: 0.65rem;">LiveKit Rooms</span>
+        </div>
+        <div id="conversationsList">
+            <!-- Rendered by JS -->
+        </div>
+
+        <!-- Gateway Info Box -->
+        <div class="section-box mt-auto mb-0" style="background: rgba(18, 27, 42, 0.85);">
+            <div class="section-header mb-2">
+                <i class="bi bi-hdd-network text-warning"></i> Architecture Specs
+            </div>
+            <div class="d-flex justify-content-between small mb-1" style="font-size: 0.75rem;">
+                <span style="color: #94a3b8;">Gate Proxy:</span>
+                <span class="text-white font-monospace">127.0.0.1:8080</span>
+            </div>
+            <div class="d-flex justify-content-between small mb-1" style="font-size: 0.75rem;">
+                <span style="color: #94a3b8;">JetStream Stream:</span>
+                <span class="text-info font-monospace">SAFI_ORCH</span>
+            </div>
+            <div class="d-flex justify-content-between small" style="font-size: 0.75rem;">
+                <span style="color: #94a3b8;">Audit Persistence:</span>
+                <span class="text-success font-monospace">SQLite (WAL)</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Center Workspace: Active Conversation, Barge-In & Dispatches -->
+    <main class="workspace-center">
+        <!-- Room Control Header -->
+        <div class="workspace-header">
+            <div>
+                <div class="d-flex align-items-center gap-3">
+                    <div id="roomAvatar" class="conv-avatar" style="width: 44px; height: 44px; font-size: 1.1rem; border-radius: 12px;">
+                        CA
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 id="activeSubject" class="mb-0 text-white fw-bold" style="font-size: 1.15rem;">Customer A – Website Enquiry</h5>
+                            <span id="modeBadge" class="mode-badge-pill badge-ungated">
+                                <i class="bi bi-shield-check"></i> UNGATED
+                            </span>
+                        </div>
+                        <div class="mt-1" style="font-size: 0.78rem; color: #94a3b8;">
+                            LiveKit Room ID: <span id="activeConvId" class="text-info font-monospace">conv-customer-a-enquiry</span>
+                            <span class="mx-2">•</span>
+                            Channel: <span id="roomChannel" class="text-light">Website Form</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barge In / Gating Toggle -->
+            <div class="d-flex align-items-center gap-2">
+                <button id="bargeInBtn" class="btn btn-sm btn-danger px-3 py-2 fw-semibold" onclick="toggleBargeIn()" style="border-radius: 8px;">
+                    <i class="bi bi-slash-circle me-1"></i> Barge In (Gate)
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat / Activity Feed -->
+        <div id="messagesArea" class="activity-stream">
+            <!-- Dynamic Customer Lead Card -->
+            <div id="leadMessageCard" class="message-bubble" style="border-left: 4px solid #3b82f6;">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-bold text-info" style="font-size: 0.85rem;">
+                        <i class="bi bi-person-fill me-1"></i> Customer Lead (Incoming Message)
+                    </span>
+                    <span id="leadTimeBadge" class="badge bg-dark border border-secondary text-secondary" style="font-size: 0.72rem;">Webhook Ingest</span>
+                </div>
+                <div id="leadMessageContent" class="text-light" style="font-size: 0.92rem; line-height: 1.45;">
+                    "Hello Safi team! We are interested in setting up automated lead routing and appointment booking for our sales team. Could you share details or set up an intro demo?"
+                </div>
+                <div id="leadMetaContent" class="mt-2 font-monospace" style="font-size: 0.74rem; color: #94a3b8;">
+                    Contact: lead@acme.com • Organization: Acme Global
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Command Hub -->
+        <div class="command-hub">
+            <div class="section-header mb-2">
+                <i class="bi bi-lightning-charge-fill text-warning"></i> Engine Dispatch Hub (Gate-Controlled)
+            </div>
+
+            <!-- 3 Engine Action Buttons in Proper Grid -->
+            <div class="row g-2 mb-2">
+                <!-- n8n Card -->
+                <div class="col-md-4">
+                    <div class="engine-card-btn n8n-btn" onclick="triggerAction('n8n')">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-white" style="font-size: 0.88rem;">
+                                <i class="bi bi-envelope-paper-fill me-1" style="color: var(--n8n-color);"></i> 1. Marketing Lead
+                            </span>
+                            <span class="badge" style="background: rgba(255,109,90,0.18); color: var(--n8n-color); font-size: 0.65rem;">n8n</span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #94a3b8;">
+                            Ingests lead & triggers automated welcome workflow.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calnode Card -->
+                <div class="col-md-4">
+                    <div class="engine-card-btn calnode-btn" onclick="triggerAction('calnode')">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-white" style="font-size: 0.88rem;">
+                                <i class="bi bi-calendar-check-fill me-1" style="color: var(--calnode-color);"></i> 2. Book Meeting
+                            </span>
+                            <span class="badge" style="background: rgba(16,185,129,0.18); color: var(--calnode-color); font-size: 0.65rem;">Calnode</span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #94a3b8;">
+                            Queries available slots & reserves host calendar.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Windmill Card -->
+                <div class="col-md-4">
+                    <div class="engine-card-btn windmill-btn" onclick="triggerAction('windmill')">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-white" style="font-size: 0.88rem;">
+                                <i class="bi bi-gear-wide-connected me-1" style="color: var(--windmill-color);"></i> 3. Operations Task
+                            </span>
+                            <span class="badge" style="background: rgba(56,189,248,0.18); color: var(--windmill-color); font-size: 0.65rem;">Windmill</span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #94a3b8;">
+                            Runs <code>assign_task</code> worker script for fulfillment.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Complete Customer Flow Button -->
+            <button class="flow-btn-primary" onclick="triggerFullFlow()">
+                <i class="bi bi-play-circle-fill fs-5"></i>
+                <span>Run Complete Customer Flow (n8n → Calnode → Windmill)</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- Right Sidebar: Held Actions & NATS JetStream Audit -->
+    <aside class="sidebar-right p-3 overflow-y-auto">
+        <!-- Held Actions Container -->
+        <div class="section-box mb-3">
+            <div class="section-header">
+                <i class="bi bi-pause-circle-fill text-warning"></i> Held Actions (Gated Mode)
+            </div>
+            <div id="heldActionsList" class="held-container-scroll">
+                <div class="text-center py-4" style="color: #94a3b8;">
+                    <i class="bi bi-shield-check text-success fs-3"></i>
+                    <div class="mt-2" style="font-size: 0.82rem;">No actions held. Room is running freely.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- JetStream Authoritative Audit Feed -->
+        <div class="section-box mb-0" style="flex-grow: 1; display: flex; flex-direction: column;">
+            <div class="section-header">
+                <i class="bi bi-activity text-info"></i> JetStream Event Audit
+            </div>
+            <div id="auditFeed" style="flex-grow: 1; overflow-y: auto; max-height: 420px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;" class="pe-1">
+                <div class="p-2" style="font-size: 0.75rem; color: #94a3b8;">Waiting for dispatch events...</div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<!-- Floating Toast Container for Modern Feedback (Positioned at Top-Right) -->
+<div id="toastContainer"></div>
+
+<script>
+const CONVERSATIONS = [
+    { 
+        id: "conv-customer-a-enquiry", 
+        subject: "Customer A – Website Enquiry", 
+        avatar: "CA", 
+        tag: "Website Form",
+        message: '"Hello Safi team! We are interested in setting up automated lead routing and appointment booking for our sales team. Could you share details or set up an intro demo?"',
+        meta: "Contact: lead@acme.com • Organization: Acme Global"
+    },
+    { 
+        id: "conv-customer-b-pricing", 
+        subject: "Customer B – Pricing Question", 
+        avatar: "CB", 
+        tag: "Pricing Query",
+        message: '"Hi! We are evaluating SafiChat for 50 sales agents. Could you provide enterprise pricing tiers and volume discounts for annual billing?"',
+        meta: "Contact: buyer@techcorp.io • Organization: TechCorp Inc."
+    },
+    { 
+        id: "conv-customer-a-demo", 
+        subject: "Customer A – Demo Request", 
+        avatar: "AD", 
+        tag: "Product Demo",
+        message: '"Following up on our earlier inquiry: can we schedule a live 30-minute product demonstration with one of your solution engineers this week?"',
+        meta: "Contact: lead@acme.com • Organization: Acme Global"
+    }
+];
+
+let activeConv = CONVERSATIONS[0];
+let currentMode = "ungated";
+let currentRoom = null;
+
+// Initialize
+window.onload = () => {
+    renderConversations();
+    selectConversation(CONVERSATIONS[0].id);
+    setInterval(refreshState, 3000);
+};
+
+function showToast(message, type = "info") {
+    const container = document.getElementById("toastContainer");
+    const toast = document.createElement("div");
+    toast.className = "safi-toast";
+    
+    let icon = "bi-info-circle-fill text-info";
+    if (type === "success") icon = "bi-check-circle-fill text-success";
+    if (type === "warning") icon = "bi-exclamation-triangle-fill text-warning";
+    if (type === "danger") icon = "bi-x-circle-fill text-danger";
+
+    toast.innerHTML = `<i class="bi ${icon} fs-5"></i><div style="font-size: 0.85rem; line-height: 1.35;">${message}</div>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-15px)";
+        toast.style.transition = "all 0.3s ease";
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+async function connectLiveKitRoom(roomId, identity) {
+    const badge = document.getElementById("lkStatusBadge");
+    badge.innerHTML = `<i class="bi bi-arrow-repeat text-warning me-1"></i> LiveKit: Connecting...`;
+    badge.style.color = "#fcd34d";
+    badge.style.borderColor = "#f59e0b";
+    
+    try {
+        if (currentRoom) {
+            await currentRoom.disconnect();
+            currentRoom = null;
+        }
+
+        const res = await fetch(`/token?room=${roomId}&identity=${identity}`);
+        const data = await res.json();
+        
+        currentRoom = new LivekitClient.Room();
+        
+        currentRoom.on(LivekitClient.RoomEvent.Connected, () => {
+            badge.style.color = "#34d399";
+            badge.style.borderColor = "#10b981";
+            badge.style.background = "rgba(16, 185, 129, 0.12)";
+            badge.innerHTML = `<i class="bi bi-circle-fill text-success" style="font-size:0.45rem;"></i> LiveKit: Connected (${roomId})`;
+            addLog(`📡 LiveKit WebRTC connected to room [${roomId}] as ${identity}`);
+        });
+
+        currentRoom.on(LivekitClient.RoomEvent.Disconnected, () => {
+            badge.style.color = "#cbd5e1";
+            badge.style.borderColor = "var(--border-subtle)";
+            badge.style.background = "rgba(30, 41, 59, 0.7)";
+            badge.innerHTML = `<i class="bi bi-circle-fill text-secondary" style="font-size:0.45rem;"></i> LiveKit: Disconnected`;
+        });
+
+        const wsUrl = data.url.replace("https://", "wss://");
+        await currentRoom.connect(wsUrl, data.token);
+    } catch (err) {
+        console.error("LiveKit connection error:", err);
+        badge.style.color = "#fcd34d";
+        badge.style.borderColor = "#f59e0b";
+        badge.innerHTML = `<i class="bi bi-shield-check text-warning" style="font-size:0.75rem;"></i> LiveKit: Token Authenticated (${roomId})`;
+    }
+}
+
+function renderConversations() {
+    const list = document.getElementById("conversationsList");
+    list.innerHTML = CONVERSATIONS.map(c => `
+        <div id="card-${c.id}" class="conv-card ${c.id === activeConv.id ? 'active' : ''}" onclick="selectConversation('${c.id}')">
+            <div class="d-flex align-items-center gap-3">
+                <div class="conv-avatar">${c.avatar}</div>
+                <div style="flex-grow: 1; min-width: 0;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div class="fw-bold text-white text-truncate" style="font-size: 0.88rem;">${c.subject}</div>
+                        <span id="badge-${c.id}" class="mode-badge-pill badge-ungated" style="font-size: 0.65rem; padding: 2px 8px;">UNGATED</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center small" style="font-size: 0.74rem;">
+                        <span class="font-monospace text-truncate" style="color: #94a3b8;">${c.id}</span>
+                        <span class="badge bg-dark border border-secondary text-secondary" style="font-size: 0.62rem;">${c.tag}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join("");
+}
+
+async function selectConversation(convId) {
+    activeConv = CONVERSATIONS.find(c => c.id === convId);
+    document.querySelectorAll(".conv-card").forEach(el => el.classList.remove("active"));
+    document.getElementById(`card-${convId}`)?.classList.add("active");
+
+    document.getElementById("activeSubject").innerText = activeConv.subject;
+    document.getElementById("activeConvId").innerText = activeConv.id;
+    document.getElementById("roomAvatar").innerText = activeConv.avatar;
+    document.getElementById("roomChannel").innerText = activeConv.tag;
+
+    // Update customer lead card content dynamically
+    document.getElementById("leadMessageContent").innerText = activeConv.message;
+    document.getElementById("leadMetaContent").innerText = activeConv.meta;
+
+    const actor = document.getElementById("userSelector").value;
+    await connectLiveKitRoom(activeConv.id, actor);
+    await refreshState();
+}
+
+function onUserChanged() {
+    const actor = document.getElementById("userSelector").value;
+    showToast(`Active User switched to: ${actor}`, "info");
+    selectConversation(activeConv.id);
+}
+
+async function refreshState() {
+    if (!activeConv) return;
+    try {
+        const res = await fetch(`/conversations/${activeConv.id}/held`);
+        const held = await res.json();
+        renderHeldActions(held);
+
+        const badge = document.getElementById("modeBadge");
+        const btn = document.getElementById("bargeInBtn");
+
+        if (currentMode === "gated") {
+            badge.className = "mode-badge-pill badge-gated";
+            badge.innerHTML = `<i class="bi bi-slash-circle"></i> GATED (APPROVAL REQUIRED)`;
+            btn.innerHTML = `<i class="bi bi-play-circle-fill me-1"></i> Return to Ungated`;
+            btn.className = "btn btn-sm btn-success px-3 py-2 fw-semibold";
+        } else {
+            badge.className = "mode-badge-pill badge-ungated";
+            badge.innerHTML = `<i class="bi bi-shield-check"></i> UNGATED (AUTO-PILOT)`;
+            btn.innerHTML = `<i class="bi bi-slash-circle me-1"></i> Barge In (Gate)`;
+            btn.className = "btn btn-sm btn-danger px-3 py-2 fw-semibold";
+        }
+
+        const roomBadge = document.getElementById(`badge-${activeConv.id}`);
+        if (roomBadge) {
+            roomBadge.className = `mode-badge-pill ${currentMode === 'gated' ? 'badge-gated' : 'badge-ungated'}`;
+            roomBadge.innerText = currentMode.toUpperCase();
+        }
+    } catch (e) {
+        console.error("Refresh error:", e);
+    }
+}
+
+function renderHeldActions(heldList) {
+    const container = document.getElementById("heldActionsList");
+    if (!heldList || heldList.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4" style="color: #94a3b8;">
+                <i class="bi bi-shield-check text-success fs-3"></i>
+                <div class="mt-2" style="font-size: 0.82rem;">No actions held. Room is running freely.</div>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = heldList.map(item => `
+        <div class="held-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); text-transform: uppercase;">
+                    ${item.engine}
+                </span>
+                <span class="mode-badge-pill badge-gated" style="font-size: 0.65rem; padding: 2px 8px;">
+                    <i class="bi bi-pause-circle"></i> AWAITING APPROVAL
+                </span>
+            </div>
+            <div class="small font-monospace mb-2" style="font-size: 0.74rem; color: #94a3b8;">
+                Action ID: <span class="text-info">${item.action_id.substring(0,8)}...</span>
+            </div>
+            <div class="mb-3">
+                <pre>${JSON.stringify(item.payload, null, 2)}</pre>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success btn-sm flex-fill fw-bold" onclick="decideAction('${item.action_id}', 'released')" style="border-radius: 8px;">
+                    <i class="bi bi-check-circle-fill me-1"></i> Release
+                </button>
+                <button class="btn btn-outline-danger btn-sm flex-fill fw-bold" onclick="decideAction('${item.action_id}', 'cancelled')" style="border-radius: 8px;">
+                    <i class="bi bi-x-circle-fill me-1"></i> Cancel
+                </button>
+            </div>
+        </div>
+    `).join("");
+}
+
+async function toggleBargeIn() {
+    const actor = document.getElementById("userSelector").value;
+    const newMode = currentMode === "ungated" ? "gated" : "ungated";
+    try {
+        const res = await fetch(`/conversations/${activeConv.id}/mode`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mode: newMode, actor_guid: actor })
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            showToast(`Permission Error: ${err.detail}`, "danger");
+            return;
+        }
+        currentMode = newMode;
+        showToast(`Mode switched to ${newMode.toUpperCase()} for ${activeConv.id}`, "warning");
+        addLog(`Barge In Triggered: Mode switched to ${newMode.toUpperCase()} by ${actor}`);
+        await refreshState();
+    } catch (e) {
+        showToast("Mode switch failed: " + e.message, "danger");
+    }
+}
+
+async function triggerAction(engine) {
+    const actor = document.getElementById("userSelector").value;
+    const idempotencyKey = "key-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
+
+    let payload = {};
+    if (engine === "n8n") {
+        payload = { enquiry: activeConv.message, contact: "lead@acme.com", name: activeConv.avatar === "CB" ? "Bob TechCorp" : "Alice Acme" };
+    } else if (engine === "calnode") {
+        payload = { action: "slots", slug: "intro-call" };
+    } else if (engine === "windmill") {
+        payload = { script_path: "u/admin/assign_task", args: { booking_id: "book-test-123", assignee: "sarah@safi.ops" } };
+    }
+
+    try {
+        const res = await fetch("/dispatch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                conversation_id: activeConv.id,
+                idempotency_key: idempotencyKey,
+                engine: engine,
+                payload: payload,
+                actor_guid: actor,
+                permission_proof: "role:owner",
+                meeting_port_context: { room: activeConv.id, source: "safichat-ui" }
+            })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(`Dispatch Error: ${data.detail || JSON.stringify(data)}`, "danger");
+            return;
+        }
+
+        if (data.state === "held") {
+            showToast(`[${engine.toUpperCase()}] Action HELD in Gated Mode!`, "warning");
+            addLog(`⏸️ [${engine.toUpperCase()}] Action HELD for approval in ${activeConv.id} (ID: ${data.action_id.substring(0,8)})`);
+        } else {
+            let displayResult = JSON.stringify(data.outcome);
+            if (engine === "calnode" && data.outcome && data.outcome.slots) {
+                const hostName = Object.values(data.outcome.hosts || {})[0]?.name || "Host";
+                displayResult = `Found ${data.outcome.slots.length} available slots for ${hostName}`;
+            } else if (engine === "windmill" && data.outcome && data.outcome.job_id) {
+                displayResult = `Job ID: ${data.outcome.job_id} (Status: ${data.outcome.status || 'ASSIGNED'})`;
+            }
+            showToast(`[${engine.toUpperCase()}] Dispatched Successfully!`, "success");
+            addLog(`✅ [${engine.toUpperCase()}] Dispatched! ${displayResult}`);
+        }
+        await refreshState();
+    } catch (e) {
+        showToast("Dispatch failed: " + e.message, "danger");
+    }
+}
+
+async function decideAction(actionId, decision) {
+    const actor = document.getElementById("userSelector").value;
+    try {
+        const res = await fetch(`/conversations/${activeConv.id}/decisions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                action_id: actionId,
+                decision: decision,
+                actor_guid: actor
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showToast(`Decision Error: ${data.detail}`, "danger");
+            return;
+        }
+        showToast(`Action ${actionId.substring(0,8)} was ${decision.toUpperCase()}!`, "info");
+        addLog(`Decision [${decision.toUpperCase()}] executed for action ${actionId.substring(0,8)}`);
+        await refreshState();
+    } catch (e) {
+        showToast("Decision failed: " + e.message, "danger");
+    }
+}
+
+async function triggerFullFlow() {
+    showToast("Starting complete customer flow...", "info");
+    addLog("🚀 Starting complete end-to-end customer flow...");
+    await triggerAction("n8n");
+    await new Promise(r => setTimeout(r, 1000));
+    await triggerAction("calnode");
+    await new Promise(r => setTimeout(r, 1000));
+    await triggerAction("windmill");
+}
+
+function addLog(text) {
+    const area = document.getElementById("messagesArea");
+    const div = document.createElement("div");
+    div.className = "message-bubble";
+    div.style.borderLeft = "4px solid #10b981";
+    div.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="badge bg-secondary" style="font-size: 0.68rem;">${new Date().toLocaleTimeString()}</span>
+            <span class="small" style="font-size: 0.72rem; color: #94a3b8;">Authoritative Gate Event</span>
+        </div>
+        <div class="text-white" style="font-size: 0.88rem;">${text}</div>
+    `;
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+
+    const audit = document.getElementById("auditFeed");
+    const auditItem = document.createElement("div");
+    auditItem.className = "p-2 border-bottom border-dark";
+    auditItem.innerHTML = `<span style="color: #64748b;">[${new Date().toLocaleTimeString()}]</span> <span style="color: #cbd5e1;">${text}</span>`;
+    audit.prepend(auditItem);
+}
+</script>
+
+</body>
+</html>
