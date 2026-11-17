@@ -1,7 +1,7 @@
 # SAFI | TACTICAL SOW — TACT-ORCH-001
 ## Local UNIX Small-Business Orchestration | SafiChat Control | Gated / Ungated Conversations
 **Official Handover & Technical Verification Package**  
-*Date: 18 November 2026 · Developer: Jayesh Dhamne · Status: ALL 12 MANDATORY TESTS VERIFIED WITH EVIDENCE*
+*Date: 18 November 2026 · Developer: Jayesh Dhamne · Git Commit SHA: `9c52a410cdbdf8cab02b10665e35b5f49c88e1a4` · Status: ALL 12 MANDATORY TESTS VERIFIED WITH EVIDENCE*
 
 ---
 
