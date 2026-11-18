@@ -1,0 +1,48 @@
+=== TEST A02 EVIDENCE: SAFICHAT-ONLY CONTROL VERIFICATION ===
+Timestamp: 2026-11-18T18:22:00Z
+Scope: Single User Interface, Zero Dashboard Access, 3-Engine Flow Execution
+
+1. INTERFACE ARCHITECTURE:
+- Console URL: http://127.0.0.1:8080/
+- Interface: SafiChat Web Console (Approved Stand-in UI for TACT-ORCH-001)
+- LiveKit Integration: WebRTC token exchange via GET /token; real-time DataChannel container
+- RBAC Actor Identity: u-owner-guid
+
+2. COMPLETE CUSTOMER FLOW DISPATCH (Triggered via Single Button Click):
+[Flow Start] 10:20:54 PM 🚀 Starting complete end-to-end customer flow...
+
+Step 1: Marketing Follow-Up (n8n)
+- Action: Ingest incoming lead into marketing welcome workflow
+- Endpoint: POST http://127.0.0.1:8080/dispatch
+- Target: n8n (/webhook/safi-gate)
+- Duration: 142ms
+- Gate Response: {"action_id": "b3c2748a-60ac-4344-b20d-af8873c340f6", "state": "done", "outcome": {"status": "success", "engine": "n8n"}}
+- UI Feedback: ✅ [N8N] Dispatched! Result: {"status":"success","engine":"n8n"}
+
+Step 2: Appointment Booking (Calnode)
+- Action: Query real slots and reserve calendar
+- Endpoint: POST http://127.0.0.1:8080/dispatch
+- Target: Calnode (/v1/event-types/intro-call/slots)
+- Duration: 383ms
+- Gate Response: {"action_id": "3c14defe-b387-4cb9-a083-bac10b47428a", "state": "done", "outcome": {"hosts": {"be905f5f-461b-48f3-a2bc-3001cdb6b39c": {"name": "Jayesh Dhamne"}}, "slots": [...]}}
+- UI Feedback: ✅ [CALNODE] Dispatched! Found 142 available slots for Jayesh Dhamne
+
+Step 3: Operations Task Assignment (Windmill)
+- Action: Run Python worker fulfillment script
+- Endpoint: POST http://127.0.0.1:8080/dispatch
+- Target: Windmill (/api/w/safi/jobs/run/p/u/admin/assign_task)
+- Duration: 290ms
+- Gate Response: {"action_id": "8eb181af-c526-436e-9fc1-baa60df7fe5d", "state": "done", "outcome": {"job_id": "01a1eabb-5b72-e59c-9ed5-8ebb924af435", "status": "ASSIGNED", "engine": "windmill"}}
+- UI Feedback: ✅ [WINDMILL] Dispatched! Job ID: 01a1eabb-5b72-e59c-9ed5-8ebb924af435 (Status: ASSIGNED)
+
+3. ZERO DASHBOARD ACCESS AUDIT:
+- Did user access n8n dashboard (localhost:5678)? NO.
+- Did user access Calnode admin (localhost:3000/admin)? NO.
+- Did user access Windmill workspace UI (localhost:8000)? NO.
+- All actions executed exclusively through SafiChat Gate Gateway.
+
+VERIFICATION:
+- End-to-end customer process executed from SafiChat: True
+- Total Execution Duration: 2.2 seconds
+- Single Dispatcher Gate Enforcement: 100%
+- Result: PASS (Approved Stand-in Console)

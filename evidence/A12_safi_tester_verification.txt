@@ -1,0 +1,43 @@
+=== TEST A12: INDEPENDENT USE BY SAFI TESTER ===
+Scope: Independent Tester Verification Runbook & Standard Instructions
+Status: PENDING SAFI TESTER ⏳
+
+1. OBJECTIVE:
+An independent evaluator / tester from SAFI executes the complete end-to-end customer process and performs Barge In mode transitions without assistance, using only the provided runbook and user guide.
+
+2. TEST INSTRUCTIONS FOR SAFI TESTER:
+Step 1: System Bring-Up
+- Run `./runbook.sh up` in terminal.
+- Verify message: "SafiChat Orchestration Console is live at: http://127.0.0.1:8080".
+
+Step 2: Access Console
+- Open browser to http://127.0.0.1:8080.
+- Verify 3 customer rooms appear on the left sidebar:
+  * Customer A – Website Enquiry
+  * Customer B – Pricing Question
+  * Customer A – Demo Request
+
+Step 3: Auto-Pilot Flow (Ungated)
+- Ensure active mode is "UNGATED".
+- Click "Run Complete Customer Flow (n8n → Calnode → Windmill)".
+- Verify 3 success responses appear in the timeline within ~3 seconds.
+
+Step 4: Barge In Transition (Gated)
+- Click the red "Barge In (Gate)" button.
+- Verify mode badge changes to "🔴 GATED (APPROVAL REQUIRED)".
+- Click "1. Marketing Lead (n8n)".
+- Verify action is NOT executed immediately, but appears under "Held Actions" on the right sidebar.
+
+Step 5: Human-in-the-Loop Decision
+- In the Held Actions card, click "Release".
+- Verify action executes to state "done" and outcome displays.
+- Click "Return to Ungated" to restore auto-pilot.
+
+Step 6: Email Leakage Inspection
+- Open http://127.0.0.1:8025 (Mailpit).
+- Verify all notifications were caught in local inbox and zero external emails leaked.
+
+3. EVALUATOR SIGNOFF:
+- Tester Name: [Pending SAFI Tester Assignment]
+- Date Verified: [Pending]
+- Signoff Status: PENDING SAFI TESTER

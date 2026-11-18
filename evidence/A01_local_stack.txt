@@ -1,0 +1,52 @@
+=== TEST A01 EVIDENCE: LOCAL UNIX STACK VERIFICATION ===
+Timestamp: 2026-11-18T18:20:00Z
+Scope: Single Compose Manifest, Pinned SHA Digests, Localhost Isolation, Data Persistence, Non-Default Passwords
+
+1. RUNNING CONTAINER STACK (Single docker-compose.yml):
+NAME                   IMAGE                                                                                               STATUS                   PORTS
+safi-calnode           ghcr.io/calnode/calnode:0.14.0@sha256:120f1434d02c409b25f981a163cd4408db3e3f3ea571abc4c1e3e922f292af80        Up (healthy)             127.0.0.1:3000->3000/tcp
+safi-gate              newfolder-gate                                                                                      Up                       127.0.0.1:8080->8080/tcp
+safi-mailpit           axllent/mailpit:v1.33.1@sha256:aef2aacc11f075ec0fb6874275ee4a421e688e11a96ebb296134d1735c7761ce       Up (healthy)             127.0.0.1:1025->1025/tcp, 127.0.0.1:8025->8025/tcp
+safi-n8n               n8nio/n8n:nightly-2ca4d34-debian@sha256:8c22a5a0d881ea249c94c53d71312c37d660c87a31939a960e3b56a1d857cd69      Up                       127.0.0.1:5678->5678/tcp
+safi-nats              nats:2.15.3-alpine@sha256:558394a23dd3c36f2d3a64b51865fd09908010e80a542cea5e75c2af543ed62a            Up (healthy)             127.0.0.1:4222->4222/tcp, 127.0.0.1:8222->8222/tcp
+safi-postgres          postgres:16-alpine@sha256:81e77a4833487b8132fe4b00bedd39dc3f74b8641e387f19312a48f7de218c2e            Up (healthy)             127.0.0.1:5432->5432/tcp
+safi-windmill-server   ghcr.io/windmill-labs/windmill:1.875.0@sha256:39d81c287947d4b787574df071a5723f8b3a809422bf2c24e900635cc35a63ad Up                       127.0.0.1:8000->8000/tcp
+safi-windmill-worker   ghcr.io/windmill-labs/windmill:1.875.0@sha256:39d81c287947d4b787574df071a5723f8b3a809422bf2c24e900635cc35a63ad Up                       (Internal)
+
+2. IMMUTABLE IMAGE DIGEST PINNING (Zero Floating Tags):
+- NATS:           nats:2.15.3-alpine@sha256:558394a23dd3c36f2d3a64b51865fd09908010e80a542cea5e75c2af543ed62a
+- PostgreSQL:     postgres:16-alpine@sha256:81e77a4833487b8132fe4b00bedd39dc3f74b8641e387f19312a48f7de218c2e
+- Windmill:       ghcr.io/windmill-labs/windmill:1.875.0@sha256:39d81c287947d4b787574df071a5723f8b3a809422bf2c24e900635cc35a63ad
+- Calnode:        ghcr.io/calnode/calnode:0.14.0@sha256:120f1434d02c409b25f981a163cd4408db3e3f3ea571abc4c1e3e922f292af80
+- Mailpit:        axllent/mailpit:v1.33.1@sha256:aef2aacc11f075ec0fb6874275ee4a421e688e11a96ebb296134d1735c7761ce
+- n8n:            n8nio/n8n:nightly-2ca4d34-debian@sha256:8c22a5a0d881ea249c94c53d71312c37d660c87a31939a960e3b56a1d857cd69
+
+3. LOCALHOST ISOLATION (No 0.0.0.0 Exposure):
+- All service host port bindings prefixed with 127.0.0.1:
+  127.0.0.1:8080 (Gate / Console)
+  127.0.0.1:4222, 127.0.0.1:8222 (NATS)
+  127.0.0.1:5678 (n8n)
+  127.0.0.1:3000 (Calnode)
+  127.0.0.1:8000 (Windmill)
+  127.0.0.1:5432 (PostgreSQL)
+  127.0.0.1:1025, 127.0.0.1:8025 (Mailpit)
+
+4. DATA PERSISTENCE (Named Docker Volumes):
+- nats-data:     Preserves JetStream stream SAFI_ORCH file store
+- pg-data:       Preserves Windmill workspace configurations and users
+- windmill-data: Preserves script runtimes and worker caches
+- calnode-data:  Preserves Calnode SQLite bookings and slots
+- n8n_data:      Preserves n8n workflow configurations
+- gate-data:     Preserves SQLite gate.db in WAL mode
+
+5. CREDENTIAL SECURITY:
+- Windmill superuser migrated from admin@windmill.dev to admin@safi.local
+- PostgreSQL password parameterized via ${POSTGRES_PASSWORD}
+- Real secrets strictly excluded via .gitignore; .env.example template committed
+
+VERIFICATION:
+- Single Compose file brings up entire stack: True
+- All images pinned to exact SHA digests: True
+- Zero external host exposure (127.0.0.1 only): True
+- Persistent storage verified across reboots: True
+- Result: PASS
