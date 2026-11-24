@@ -83,7 +83,7 @@ services:
     environment:
       PORT:                   "3000"
       BASE_URL:               "http://localhost:3000"
-      CALNODE_ENCRYPTION_KEY: "safi_secret_encryption_key_32bytes!"
+      CALNODE_ENCRYPTION_KEY: ${CALNODE_ENCRYPTION_KEY}
       API_KEY:                ${CALNODE_API_KEY}
     ports:
       - "127.0.0.1:3000:3000"   # localhost only
